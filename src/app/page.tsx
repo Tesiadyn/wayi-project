@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { log, time } from "console";
+import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 
 interface TaskProps {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   is_completed: boolean;
@@ -15,6 +16,13 @@ export default function Home() {
   const [allTasks, setAllTasks] = useState<Array<TaskProps>>([]);
   const [filteredTasks, setFilteredTasks] = useState<Array<TaskProps>>([]);
   const [showCompeletedTask, setShowCompeletedTask] = useState(true);
+  const [newTask, setNewTask] = useState<TaskProps>({
+    name: "",
+    description: "",
+    is_completed: false,
+    created_at: "",
+    updated_at: "",
+  });
 
   useEffect(() => {
     const fetchTaskList = async () => {
@@ -28,30 +36,96 @@ export default function Home() {
     fetchTaskList();
   }, []);
 
-  const toggleCompeletedTask = () => {
-    setShowCompeletedTask(!showCompeletedTask);
-
+  useEffect(() => {
     if (!showCompeletedTask) {
-      const incompeletedTasks = allTasks.filter((task) => !task.is_completed);
-      setFilteredTasks(incompeletedTasks);
+      setFilteredTasks(allTasks.filter((task) => !task.is_completed));
     } else {
       setFilteredTasks(allTasks);
+    }
+  }, [showCompeletedTask, allTasks]);
+
+  const toggleCompeletedTask = () => {
+    setShowCompeletedTask((prevShowCompeletedTask) => !prevShowCompeletedTask);
+  };
+
+  const handleFormChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewTask({
+      ...newTask,
+      [name]: value,
+    });
+  };
+  const handleFormSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const timeStamp = new Date().toISOString();
+    const updatedTask = {
+      ...newTask,
+      created_at: timeStamp,
+      updated_at: timeStamp,
+    };
+    setNewTask(updatedTask);
+    try {
+      const res = await fetch("https://wayi.league-funny.com/api/task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedTask),
+      });
+      if (res.ok) {
+        console.log("updated");
+      } else {
+        console.error("not updated");
+      }
+    } catch (err) {
+      console.error("Error when adding new task:", err);
     }
   };
 
   return (
     <>
       <button onClick={toggleCompeletedTask}>
-        {showCompeletedTask ? "Show compeleted" : "Hide compeleted"}
+        {showCompeletedTask ? "Hide compeleted" : "Show compeleted"}
       </button>
+      <div>
+        <h2>new task</h2>
+        <form onSubmit={handleFormSubmit}>
+          <label htmlFor="task_name">task name</label>
+          <input
+            id="task_name"
+            name="name"
+            value={newTask.name}
+            placeholder="task name"
+            onChange={handleFormChange}
+            maxLength={10}
+            type="input"
+            required
+          ></input>
+          <label htmlFor="task_desc">
+            description
+            <input
+              id="task_desc"
+              name="description"
+              value={newTask.description}
+              placeholder="description(optional)"
+              onChange={handleFormChange}
+              maxLength={30}
+              type="input"
+            ></input>
+          </label>
+          <button type="submit">add new task</button>
+        </form>
+      </div>
       {filteredTasks.map((task) => (
         <div key={task.id}>
-          <h1>{task.id}</h1>
-          <h2>{task.name}</h2>
-          <p>{task.description}</p>
-          <p>Compeleted : {task.is_completed.toString()}</p>
-          <p>{task.created_at}</p>
-          <p>{task.updated_at}</p>
+          <h1>id:{task.id}</h1>
+          <h2>name:{task.name}</h2>
+          <p>desc:{task.description}</p>
+          <p>compeleted:{task.is_completed.toString()}</p>
+          <p>created:{task.created_at}</p>
+          <p>updated:{task.updated_at}</p>
         </div>
       ))}
     </>
