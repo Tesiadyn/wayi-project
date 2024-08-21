@@ -1,8 +1,6 @@
 "use client";
-
-import { log, time } from "console";
 import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
-
+import EditTaskForm from "./EditTaskForm";
 interface TaskProps {
   id?: number;
   name: string;
@@ -23,6 +21,7 @@ export default function Home() {
     created_at: "",
     updated_at: "",
   });
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchTaskList = async () => {
@@ -84,6 +83,44 @@ export default function Home() {
     }
   };
 
+  const handleSaveTask = async (updatedTask: TaskProps) => {
+    try {
+      const res = await fetch(
+        `https://wayi.league-funny.com/api/task/${updatedTask.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedTask),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to update task");
+      }
+
+      const updatedTaskData = await res.json();
+
+      setAllTasks(
+        allTasks.map((task) =>
+          task.id === updatedTaskData.id ? updatedTaskData : task
+        )
+      );
+
+      setFilteredTasks(
+        filteredTasks.map((task) =>
+          task.id === updatedTaskData.id ? updatedTaskData : task
+        )
+      );
+
+      setEditingTaskId(null);
+    } catch (error) {
+      console.error("Error updating task:", error);
+
+    }
+  };
+
   return (
     <>
       <button onClick={toggleCompeletedTask}>
@@ -120,12 +157,23 @@ export default function Home() {
       </div>
       {filteredTasks.map((task) => (
         <div key={task.id}>
-          <h1>id:{task.id}</h1>
-          <h2>name:{task.name}</h2>
-          <p>desc:{task.description}</p>
-          <p>compeleted:{task.is_completed.toString()}</p>
-          <p>created:{task.created_at}</p>
-          <p>updated:{task.updated_at}</p>
+          {editingTaskId === task.id ? (
+            <EditTaskForm
+              task={task}
+              onSave={handleSaveTask}
+              onCancel={() => setEditingTaskId(null)}
+            />
+          ) : (
+            <>
+              <h1>id:{task.id}</h1>
+              <h2>name:{task.name}</h2>
+              <p>desc:{task.description}</p>
+              <p>compeleted:{task.is_completed.toString()}</p>
+              <p>created:{task.created_at}</p>
+              <p>updated:{task.updated_at}</p>
+              <button onClick={()=> setEditingTaskId(task.id ?? null)}>Edit</button>
+            </>
+          )}
         </div>
       ))}
     </>
