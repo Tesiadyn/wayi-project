@@ -117,7 +117,35 @@ export default function Home() {
       setEditingTaskId(null);
     } catch (error) {
       console.error("Error updating task:", error);
+    }
+  };
 
+  const handleTaskDelete = async (id: number) => {
+    const res = await fetch(`https://wayi.league-funny.com/api/task/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to update task");
+    }
+  };
+
+  const handleCheckboxChange = async (task: TaskProps) => {
+    const updatedTask = { ...task, is_completed: !task.is_completed };
+    try {
+      await fetch(`https://wayi.league-funny.com/api/task/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_completed: updatedTask.is_completed }),
+      });
+      setAllTasks((prevTasks) =>
+        prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
+      );
+      setFilteredTasks((prevTasks) =>
+        prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
+      );
+    } catch (error) {
+      console.error("Failed to update task", error);
     }
   };
 
@@ -169,9 +197,19 @@ export default function Home() {
               <h2>name:{task.name}</h2>
               <p>desc:{task.description}</p>
               <p>compeleted:{task.is_completed.toString()}</p>
+              <label htmlFor={`comp_status_${task.id}`}>Completed</label>
+              <input
+                id={`comp_status_${task.id}`}
+                type="checkbox"
+                checked={task.is_completed}
+                onChange={() => handleCheckboxChange(task)}
+              ></input>
               <p>created:{task.created_at}</p>
               <p>updated:{task.updated_at}</p>
-              <button onClick={()=> setEditingTaskId(task.id ?? null)}>Edit</button>
+              <button onClick={() => setEditingTaskId(task.id ?? null)}>
+                Edit
+              </button>
+              <button onClick={() => handleTaskDelete(task.id!)}>Delete</button>
             </>
           )}
         </div>
