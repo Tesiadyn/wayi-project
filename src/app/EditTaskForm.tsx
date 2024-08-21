@@ -17,13 +17,13 @@ interface EditTaskFormProps{
 }
 
 const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onCancel }) => {
-    const [name, setName] = useState(task.name);
+    const [name, setName] = useState(task.name)
     const [description, setDescription] = useState(task.description);
-    const [isCompleted, setIsCompleted] = useState(task.is_completed);
+
   
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      onSave({ ...task, name, description, is_completed: isCompleted });
+      onSave({ ...task, name, description });
     };
   
     return (
@@ -34,19 +34,11 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSave, onCancel }) =
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <textarea
+        <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
         />
-        <label>
-          <input
-            type="checkbox"
-            checked={isCompleted}
-            onChange={(e) => setIsCompleted(e.target.checked)}
-          />
-          Completed
-        </label>
         <button type="submit">Save</button>
         <button type="button" onClick={onCancel}>Cancel</button>
       </form>
